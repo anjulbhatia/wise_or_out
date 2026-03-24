@@ -1,10 +1,11 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useGame } from '@/hooks/game-context'
 import { Category } from '@/lib/types'
-import { motion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import { Header } from './ui/Header'
 import { Footer } from './ui/Footer'
+import { Orb } from './ui/Orb'
 
 const CATEGORIES: Category[] = ['surprise', 'ai', 'entertainment', 'sports', 'world']
 
@@ -16,6 +17,19 @@ const CATEGORY_META: Record<Category, { icon: string; color: string; label: stri
   world: { icon: '◇', color: '#FF9800', label: 'World' },
 }
 
+const TEXT_LINES = [
+  "Welcome to WiseOrOut",
+  "An interactive quiz to find out if you're wise",
+  "The game is simple",
+  "10 questions",
+  "Each with 4 options",
+  "Only one is correct",
+  "Correct answers take you up",
+  "Wrong answers bring you down",
+  "Three checkpoints",
+  "Three lifelines"
+]
+
 interface LandingPageProps {
   onLeaderboardClick: () => void
   onLanguageToggle: () => void
@@ -26,6 +40,14 @@ export function LandingPage({ onLeaderboardClick, onLanguageToggle, language }: 
   const { startGame } = useGame()
   const [selectedCategory, setSelectedCategory] = useState<Category>('surprise')
   const [hoveredCategory, setHoveredCategory] = useState<Category | null>(null)
+  const [textIndex, setTextIndex] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTextIndex(prev => (prev + 1) % TEXT_LINES.length)
+    }, 2500)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleStart = () => {
     startGame('Contestant', undefined, selectedCategory)
@@ -41,13 +63,26 @@ export function LandingPage({ onLeaderboardClick, onLanguageToggle, language }: 
 
       <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-y-auto">
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-6"
+          className="relative mb-6"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
         >
-          <h1 className="text-3xl font-bold text-white mb-2">WiseOrOut</h1>
-          <p className="text-muted-foreground text-sm">Test your knowledge</p>
+          <Orb state="idle" size={80} />
         </motion.div>
+
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={textIndex}
+            className="text-center text-sm text-muted-foreground px-4 mb-6 h-6"
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.3 }}
+          >
+            {TEXT_LINES[textIndex]}
+          </motion.p>
+        </AnimatePresence>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
