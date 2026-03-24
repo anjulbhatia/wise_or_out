@@ -2,9 +2,20 @@
 
 > Ten questions. One shot. Are you wise enough — or are you out?
 
-A cinematic quiz game powered by **ElevenLabs** voice + **Firecrawl** live question fetching.
+A cinematic quiz game powered by [Elevenlabs](https://elevenlabs.io/) voice + [Firecrawl](https://firecrawl.dev/) live question fetching.
 
 Built for the ElevenLabs x Firecrawl Hackathon.
+
+#elevenhacks
+
+---
+
+## Gallery
+  <img width="1000" height="540" alt="image" src="https://github.com/user-attachments/assets/9604bba7-6963-44ac-8100-5f529cde2fe6" />
+<div style="display:flex-inline">
+  <img width="700" height="540" alt="image" src="https://github.com/user-attachments/assets/d704d7c8-10de-476c-8cb9-e5e5ad0d8f74" />
+  <img width="300" height="540" alt="image" src="https://github.com/user-attachments/assets/5f7ee966-2655-4fbc-b319-22ed332110f0" />
+</div>
 
 ---
 
@@ -12,18 +23,17 @@ Built for the ElevenLabs x Firecrawl Hackathon.
 
 - Next.js
 - Tailwind CSS
-- ElevenLabs Voice Design (Amitabh-style host voice)
+- ElevenLabs Agents (Amitabh-style host)
 - Firecrawl (live web question fetching)
-- Convex (leaderboard — swap in for the in-memory API route)
-
 ---
 
 ## Setup
 
 ```bash
-git clone https://github.com/anjulbhatia/wise_or_out.git
-cd wiseorout
+git clone https://github.com/anjulbhatia/hotseat.git
+cd hotseat
 bun install
+npm run dev
 ```
 
 Copy all component files into `src/`. Then:
@@ -31,25 +41,13 @@ Copy all component files into `src/`. Then:
 ```bash
 cp .env.local.example .env.local
 # Fill in your API keys
+NEXT_PUBLIC_ELEVENLABS_API_KEY=<YOUR_ELEVENLABS_API_KEY>
+NEXT_PUBLIC_ELEVENLABS_VOICE_ID=<YOUR_ELEVENLABS_VOICE_ID>
+NEXT_PUBLIC_ELEVENLABS_AGENT_ID=<YOUR_ELEVENLABS_AGENT_ID>
+FIRECRAWL_API_KEY=<YOUR_FIRECRAWL_API_ID>
+
 npm run dev
 ```
-
----
-
-## Pre-generate ElevenLabs Audio
-
-Before deploying, generate these 6 clips in ElevenLabs Voice Design and save to `/public/audio/`:
-
-| File | Script |
-|------|--------|
-| `intro.mp3` | "Welcome. You have come far to sit in this chair. Ten questions stand between you and everything. The question is — are you wise enough... or are you out?" |
-| `correct-low.mp3` | "Correct! You're on your way." |
-| `correct-high.mp3` | "Extraordinary. Very few make it this far." |
-| `wrong.mp3` | "And that... is where your journey ends. So close, yet so far." |
-| `checkpoint.mp3` | "You have secured this amount. It is yours, no matter what happens next." |
-| `victory.mp3` | "Unbelievable. You have done what almost no one does. You are wise. You are not out." |
-
-Voice settings: Deep baritone, slow cadence, dramatic pauses, high stability.
 
 ---
 
@@ -84,7 +82,3 @@ src/
       questions/route.ts   — Firecrawl + Claude question API
       leaderboard/route.ts — Score storage + percentile
 ```
-
----
-
-Built by @aunn · Powered by ElevenLabs + Firecrawl
