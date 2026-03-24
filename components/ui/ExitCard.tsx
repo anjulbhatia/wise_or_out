@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useGame } from '@/lib/game-context'
+import { useGame } from '@/hooks/game-context'
 import { formatPrize } from '@/lib/types'
 import { motion } from 'motion/react'
 

@@ -1,22 +1,18 @@
 'use client'
 import { useState } from 'react'
-import { useGame } from '@/lib/game-context'
+import { useGame } from '@/hooks/game-context'
 import { LandingPage } from '@/components/LandingPage'
 import { GameplayScreen } from '@/components/GameplayScreen'
 import { ExitCard } from '@/components/ui/ExitCard'
-import { LeaderboardScreen } from '@/components/LeaderboardScreen'
+import { LeaderboardModal } from '@/components/ui/LeaderboardModal'
 
 function AppContent() {
   const { state, goToScreen, resetGame } = useGame()
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
-  const [replayTrigger, setReplayTrigger] = useState(0)
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
 
   const handleLanguageToggle = () => {
     setLanguage(prev => prev === 'en' ? 'hi' : 'en')
-  }
-
-  const handleReplayIntro = () => {
-    setReplayTrigger(prev => prev + 1)
   }
 
   const handlePlayAgain = () => {
@@ -41,18 +37,18 @@ function AppContent() {
     )
   }
 
-  if (state.screen === 'leaderboard') {
-    return <LeaderboardScreen />
-  }
-
   return (
-    <LandingPage 
-      onLeaderboardClick={() => goToScreen('leaderboard')}
-      onLanguageToggle={handleLanguageToggle}
-      onReplayIntro={handleReplayIntro}
-      language={language}
-      replayTrigger={replayTrigger}
-    />
+    <>
+      <LandingPage 
+        onLeaderboardClick={() => setShowLeaderboard(true)}
+        onLanguageToggle={handleLanguageToggle}
+        language={language}
+      />
+      <LeaderboardModal 
+        open={showLeaderboard} 
+        onClose={() => setShowLeaderboard(false)} 
+      />
+    </>
   )
 }
 

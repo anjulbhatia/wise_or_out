@@ -1,32 +1,112 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useGame } from '@/lib/game-context'
+import { useState, useEffect, useRef } from 'react'
+import { useGame } from '@/hooks/game-context'
 import { motion } from 'motion/react'
 import { PrizeLadder } from './PrizeLadder'
 import { Orb } from './ui/Orb'
 import { Drawer } from './ui/Drawer'
+import { useAppConversation } from '@/hooks/useAppConversation'
 import { PRIZE_LADDER, CHECKPOINTS, TIMERS, formatPrize } from '@/lib/types'
 import { SquareUser } from 'lucide-react'
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D']
 
 export function GameplayScreen() {
-  const { state, selectOption, resolveAnswer, useFiftyFifty, useSwap, useSkip, goToScreen } = useGame()
-  const { questions, currentQuestionIndex, selectedOption, answerState, lifelinesUsed, score } = state
+  const { state, dispatch, selectOption, resolveAnswer, activateFiftyFifty, activateSwap, activateSkip, goToScreen, nextQuestion } = useGame()
+  const { questions, currentQuestionIndex, selectedOption, answerState, lifelinesUsed, score, playerName } = state
 
+  const lastQuestionIndexRef = useRef(-1)
+  const lastAnswerStateRef = useRef('')
   const [showAside, setShowAside] = useState(true)
   const [showExplanationDrawer, setShowExplanationDrawer] = useState(false)
   const [explanationText, setExplanationText] = useState('')
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
+
+  const voice = useAppConversation({
+    onChooseOption: (option: string) => {
+      console.log('[Voice] Choosing option:', option)
+      selectOption(option)
+    },
+    onChooseLifeline: (lifeline: '5050' | 'swap' | 'skip' | 'expert') => {
+      console.log('[Voice] Using lifeline:', lifeline)
+      if (lifeline === '5050') activateFiftyFifty()
+      else if (lifeline === 'swap') activateSwap(questions[currentQuestionIndex])
+      else if (lifeline === 'skip') activateSkip()
+      else if (lifeline === 'expert') activateFiftyFifty()
+    },
+    onRepeatQuestion: () => {},
+    onRepeatOptions: () => {},
+    onQuit: () => {
+      voice.disconnect()
+      goToScreen('landing')
+    },
+    onGetExplanation: () => {},
+    onPauseGame: () => {},
+    onResumeGame: () => {},
+    onReadyForNextQuestion: () => nextQuestion(),
+  })
+  const hasVoice = !!process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID
+
+  // Connect to voice on mount
+  useEffect(() => {
+    if (hasVoice && !voice.isConnected) {
+      voice.connect()
+    }
+  }, [hasVoice, voice])
+
+  // Send question when question changes
+  useEffect(() => {
+    if (hasVoice && currentQuestionIndex !== lastQuestionIndexRef.current && currentQuestionIndex < questions.length) {
+      lastQuestionIndexRef.current = currentQuestionIndex
+      const q = questions[currentQuestionIndex]
+      voice.sendQuestion(q, currentQuestionIndex, score)
+    }
+  }, [hasVoice, currentQuestionIndex, questions, score, voice])
+
+  // Send answer result
+  useEffect(() => {
+    if (hasVoice && answerState !== 'idle' && answerState !== lastAnswerStateRef.current) {
+      lastAnswerStateRef.current = answerState
+      if (answerState === 'correct' || answerState === 'wrong') {
+        voice.sendAnswer(selectedOption || '', answerState === 'correct')
+      }
+    }
+  }, [hasVoice, answerState, questions, currentQuestionIndex, selectedOption, voice])
+
+  // Handle checkpoint
+  useEffect(() => {
+    if (hasVoice && CHECKPOINTS.includes(currentQuestionIndex) && answerState === 'correct') {
+      voice.sendCheckpoint(playerName || 'Contestant', currentQuestionIndex, score)
+    }
+  }, [hasVoice, currentQuestionIndex, answerState, score, playerName, voice])
+
+  // Handle game over
+  useEffect(() => {
+    if (hasVoice && answerState === 'wrong') {
+      voice.sendGameOver(playerName || 'Contestant', score, currentQuestionIndex)
+    }
+  }, [hasVoice, answerState, score, currentQuestionIndex, playerName, voice])
+
+  // Handle victory
+  useEffect(() => {
+    if (hasVoice && currentQuestionIndex === 9 && answerState === 'correct') {
+      voice.sendVictory(playerName || 'Contestant')
+    }
+  }, [hasVoice, currentQuestionIndex, answerState, playerName, voice])
 
   const currentQuestion = questions[currentQuestionIndex]
   const currentPrize = PRIZE_LADDER[currentQuestionIndex]
   const timerDuration = TIMERS[currentQuestionIndex]
   const hasTimer = timerDuration !== null
 
+  const timeLeftRef = useRef<number | null>(null)
+
   useEffect(() => {
     if (hasTimer && answerState === 'idle') {
-      setTimeLeft(timerDuration)
+      const newTimeLeft = timerDuration
+      timeLeftRef.current = newTimeLeft
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTimeLeft(newTimeLeft)
     }
   }, [currentQuestionIndex, hasTimer, answerState, timerDuration])
 
@@ -80,14 +160,40 @@ export function GameplayScreen() {
     selectOption(option)
   }
 
+  const handleExpertLifeline = async () => {
+    if (answerState !== 'idle') return
+    const current = questions[currentQuestionIndex]
+    if (!current) return
+    
+    dispatch({ type: 'USE_LIFELINE', lifeline: 'expert' })
+    
+    try {
+      const res = await fetch('/api/explanation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          question: current.question, 
+          correctAnswer: current.answer 
+        })
+      })
+      const data = await res.json()
+      setExplanationText(data.explanation || `The correct answer is ${current.answer}`)
+      setShowExplanationDrawer(true)
+    } catch (e) {
+      setExplanationText(`The correct answer is ${current.answer}`)
+      setShowExplanationDrawer(true)
+    }
+  }
+
   const handleUseLifeline = (id: string) => {
     if (answerState !== 'idle') return
-    if (id === '5050') useFiftyFifty()
-    else if (id === 'swap') useSkip()
-    else if (id === 'expert') useFiftyFifty()
+    if (id === '5050') activateFiftyFifty()
+    else if (id === 'swap') activateSkip()
+    else if (id === 'expert') handleExpertLifeline()
   }
 
   const handleQuit = () => {
+    voice.disconnect()
     goToScreen('landing')
   }
 

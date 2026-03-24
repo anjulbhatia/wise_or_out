@@ -1,9 +1,8 @@
 'use client'
 import { useState } from 'react'
-import { useGame } from '@/lib/game-context'
+import { useGame } from '@/hooks/game-context'
 import { Category } from '@/lib/types'
 import { motion } from 'motion/react'
-import { Intro } from './Intro'
 import { Header } from './ui/Header'
 import { Footer } from './ui/Footer'
 
@@ -20,18 +19,16 @@ const CATEGORY_META: Record<Category, { icon: string; color: string; label: stri
 interface LandingPageProps {
   onLeaderboardClick: () => void
   onLanguageToggle: () => void
-  onReplayIntro: () => void
   language: 'en' | 'hi'
-  replayTrigger: number
 }
 
-export function LandingPage({ onLeaderboardClick, onLanguageToggle, onReplayIntro, language, replayTrigger }: LandingPageProps) {
-  const { startGame, state } = useGame()
+export function LandingPage({ onLeaderboardClick, onLanguageToggle, language }: LandingPageProps) {
+  const { startGame } = useGame()
   const [selectedCategory, setSelectedCategory] = useState<Category>('surprise')
   const [hoveredCategory, setHoveredCategory] = useState<Category | null>(null)
 
   const handleStart = () => {
-    startGame('Anonymous', undefined, selectedCategory)
+    startGame('Contestant', undefined, selectedCategory)
   }
 
   return (
@@ -39,19 +36,17 @@ export function LandingPage({ onLeaderboardClick, onLanguageToggle, onReplayIntr
       <Header 
         onLeaderboardClick={onLeaderboardClick}
         onLanguageToggle={onLanguageToggle}
-        onReplayIntro={onReplayIntro}
         language={language}
       />
 
       <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-y-auto">
         <motion.div
-          className="w-full max-w-sm mb-4"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-6"
         >
-          <Intro 
-            replayTrigger={replayTrigger} 
-          />
+          <h1 className="text-3xl font-bold text-white mb-2">WiseOrOut</h1>
+          <p className="text-muted-foreground text-sm">Test your knowledge</p>
         </motion.div>
 
         <motion.div
@@ -62,7 +57,7 @@ export function LandingPage({ onLeaderboardClick, onLanguageToggle, onReplayIntr
         >
           <motion.button
             onClick={handleStart}
-            className="action-button text-xs py-3 px-8 cursor-pointer"
+            className="mt-4 action-button text-xs py-3 px-8 cursor-pointer"
             whileTap={{ scale: 0.95 }}
           >
             Take the Seat

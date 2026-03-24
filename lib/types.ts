@@ -46,9 +46,9 @@ export interface GameState {
   questionsCorrect: number
 }
 
-export const PRIZE_LADDER = [10, 20, 50, 100, 200, 500, 1000, 2500, 5000, 10000]
+export const PRIZE_LADDER = [1000, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 500000, 1000000]
 
-export const CHECKPOINTS = [2, 6, 9]
+export const CHECKPOINTS = [3, 6, 9]
 
 export const TIMERS: Record<number, number | null> = {
   0: 30, 1: 30, 2: 30,
@@ -65,7 +65,7 @@ export const CATEGORY_LABELS: Record<Category, string> = {
 }
 
 export const formatPrize = (amount: number): string => {
-  if (amount >= 10000) return `${(amount / 10000).toFixed(0)}0K`
-  if (amount >= 1000) return `${(amount / 1000).toFixed(0)}K`
+  if (amount >= 10000) return `${(amount)}`
+  if (amount >= 1000) return `${(amount)}`
   return `${amount}`
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
-import { GameProvider } from "@/lib/game-context";
+import { GameProvider } from "@/hooks/game-context";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
